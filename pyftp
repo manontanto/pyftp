@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+# pyftp [fileList]
+#
+# manontanto
+#
+'''
+    fileListに列挙されたファイルと, remote hostのファイルとのTimestampを比較し,
+    localがupdateされていたら,リモートを置換する
+'''
+import os
+import sys
+from ftplib import FTP
+import datetime
+from dateutil import parser
+
+Host_address = HOST_URL
+User_id = ID
+Password = PW
+Port = 21 # default 21
+Timeout = 500 # timeout
+
+local_path = LOCAL_PATH
+remote_path = REMOTE_PATH
+fileList = FILE_LIST
+
+def main():
+    arg = len(sys.argv)
+    if arg == 1:
+        newfiles = filelList
+    elif arg == 2:
+        newfiles = sys.argv[1]  # fileList by argument
+    else:
+        print('pyftp [Name_of_Listfile]')
+        sys.exit()
+
+    contents = []
+    try:
+        f = open(newfiles, 'r')
+    except OSError as e:
+        print(e)
+        sys.exit()
+    else:
+        contents = [s.strip() for s in f.readlines()]
+        f.close()
+
+    try:
+        ftp = FTP(Host_address, User_id, Password, Port, Timeout)
+        print("ftp connected.\n")
+    except ftp.all_errors as e:
+        print(e.args)
+        ftp.quit()
+
+    for _, file_name in enumerate(contents):
+        read_timestamp(file_name, ftp)
+
+    print("ftp quited.\n")
+    ftp.quit()
+
+def read_timestamp(f, remote):
+    """ Check timestamp and update."""
+    def pyupdate():
+        update_file = open(local_file_path, 'rb')
+        try:
+            remote.storbinary("STOR " + remote_file_path, update_file)
+            print(" ***uploaded***\n")
+            update_file.close()
+        except remote.all_errors as e:
+            print(e.args)
+    
+    local_file_path = local_path + f
+    remote_file_path = remote_path + f
+    #local fileの更新時間
+    t = os.path.getmtime(local_file_path)
+    d = datetime.datetime.fromtimestamp(t)
+    lts = "{0:%Y-%m-%d %H:%M:%S}".format(d)
+    #remote fileの更新時間(同じファイルパス)
+    if f not in remote.nlst(remote_path):
+        print("FileName: {0}\n local_TS : {1}\n remote_TS: {2}\n".format(f, lts, 'none'))
+        pyupdate()
+        return
+
+    rt0 = remote.voidcmd("MDTM " + remote_file_path)[4:].strip()
+    rt = parser.parse(rt0) # return epoch time, so need +9
+    rt += datetime.timedelta(hours=9)
+    rts = "{0:%Y-%m-%d %H:%M:%S}".format(rt)
+    print("FileName: {0}\n local_TS : {1}\n remote_TS: {2}\n".format(f, lts, rts))
+    if rts < lts:
+       update()
+       return
+
+if __name__ == '__main__':
+    main()
