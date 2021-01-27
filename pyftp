@@ -70,11 +70,15 @@ def read_timestamp(f, remote):
     local_file_path = local_path + f
     remote_file_path = remote_path + f
     #local fileの更新時間
-    t = os.path.getmtime(local_file_path)
+    try:
+        t = os.path.getmtime(local_file_path)
+    except OSError as e:
+        print(e)
+        sys.exit()
     d = datetime.datetime.fromtimestamp(t)
     lts = "{0:%Y-%m-%d %H:%M:%S}".format(d)
     #remote fileの更新時間(同じファイルパス)
-    if f not in remote.nlst(remote_path):
+    if os.path.basename(f) not in remote.nlst(remote_path + os.path.dirname(f)):
         print("FileName: {0}\n local_TS : {1}\n remote_TS: {2}\n".format(f, lts, 'none'))
         pyupdate()
         return
@@ -85,7 +89,7 @@ def read_timestamp(f, remote):
     rts = "{0:%Y-%m-%d %H:%M:%S}".format(rt)
     print("FileName: {0}\n local_TS : {1}\n remote_TS: {2}\n".format(f, lts, rts))
     if rts < lts:
-       update()
+       pyupdate()
        return
 
 if __name__ == '__main__':
