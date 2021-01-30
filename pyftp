@@ -5,7 +5,7 @@
 #
 '''
     fileListに列挙されたファイルと, remote hostのファイルとのTimestampを比較し,
-    localがupdateされていたら,リモートを置換する
+    localがupdateされていたら置換する
 '''
 import os
 import sys
@@ -66,7 +66,7 @@ def read_timestamp(f, remote):
             update_file.close()
         except remote.all_errors as e:
             print(e.args)
-    
+
     local_file_path = local_path + f
     remote_file_path = remote_path + f
     #local fileの更新時間
@@ -77,7 +77,7 @@ def read_timestamp(f, remote):
         sys.exit()
     d = datetime.datetime.fromtimestamp(t)
     lts = "{0:%Y-%m-%d %H:%M:%S}".format(d)
-    #remote fileの更新時間(同じファイルパス)
+    #remote fileの更新時間
     if os.path.basename(f) not in remote.nlst(remote_path + os.path.dirname(f)):
         print("FileName: {0}\n local_TS : {1}\n remote_TS: {2}\n".format(f, lts, 'none'))
         pyupdate()
